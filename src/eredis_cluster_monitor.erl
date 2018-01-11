@@ -27,6 +27,9 @@
 
 %% API.
 -spec start_link() -> {ok, pid()}.
+
+-define(TIMEOUT, application:get_env(eredis_cluster, query_timeout, 5000)).
+
 start_link() ->
     gen_server:start_link({local,?MODULE}, ?MODULE, [], []).
 
@@ -94,7 +97,7 @@ get_cluster_slots([]) ->
 get_cluster_slots([Node|T]) ->
     case safe_eredis_start_link(Node#node.address, Node#node.port) of
         {ok,Connection} ->
-          case eredis:q(Connection, ["CLUSTER", "SLOTS"]) of
+          case eredis:q(Connection, ["CLUSTER", "SLOTS"], ?TIMEOUT) of
             {error,<<"ERR unknown command 'CLUSTER'">>} ->
                 get_cluster_slots_from_single_node(Node);
             {error,<<"ERR This instance has cluster support disabled">>} ->

@@ -16,6 +16,8 @@
 
 -record(state, {conn}).
 
+-define(TIMEOUT, application:get_env(eredis_cluster, query_timeout, 5000)).
+
 start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
@@ -43,9 +45,9 @@ handle_call({'query', _}, _From, #state{conn = undefined} = State) ->
     {reply, {error, no_connection}, State};
 handle_call({'query', [[X|_]|_] = Commands}, _From, #state{conn = Conn} = State)
     when is_list(X); is_binary(X) ->
-    {reply, eredis:qp(Conn, Commands), State};
+    {reply, eredis:qp(Conn, Commands, ?TIMEOUT), State};
 handle_call({'query', Command}, _From, #state{conn = Conn} = State) ->
-    {reply, eredis:q(Conn, Command), State};
+    {reply, eredis:q(Conn, Command, ?TIMEOUT), State};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
